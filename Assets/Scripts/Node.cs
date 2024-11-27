@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -45,19 +46,41 @@ public class Node : MonoBehaviour
         }
     }
 
-    public void AddPawn(Pawn pawn)
+    public bool AddPawn(Pawn pawn)
     {
-        if(pawnsOnNode.Contains(pawn)) return;
+        if(pawnsOnNode.Contains(pawn))
+        {
+            return true;
+        }
         
+        int playerPieceCount = 0;
+        foreach (Pawn p in pawnsOnNode)
+        {
+            if(p.mainPlayer == pawn.mainPlayer)
+            {
+                playerPieceCount++;
+            }
+        }
         //checking if the node is full or not
-        if(pawnsOnNode.Count < MAX_PLAYERS_PER_NODE)
+        if(playerPieceCount < MAX_PLAYERS_PER_NODE)
         {
             pawnsOnNode.Add(pawn);
             PawnLandsEvent?.Invoke(pawn);
+            return true;
         }
         else
         {
             Debug.Log("Node Full");
+            EnablePawnInteraction(pawnsOnNode);
+            return false;
+        }
+    }
+
+    private void EnablePawnInteraction(List<Pawn> pawnsOnNode)
+    {
+        foreach(Pawn p in pawnsOnNode)
+        {
+            p.EnableMovementInteraction();
         }
     }
 
@@ -80,5 +103,16 @@ public class Node : MonoBehaviour
                 p.ResetToHomePosition();
             }
         }
+    }
+
+    public bool IsBlockedForOtherPlayer(Pawn pawn)
+    {
+        int playerPieceCount = 0;
+
+        foreach (Pawn p in pawnsOnNode)
+        {
+            playerPieceCount ++;
+        }
+        return playerPieceCount >= MAX_PLAYERS_PER_NODE && pawnsOnNode[0].mainPlayer != pawn.mainPlayer;
     }
 }

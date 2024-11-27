@@ -18,6 +18,8 @@ public class DiceRoll : MonoBehaviour
 
     public int diceResult1, diceResult2;
 
+    public bool diceInteractable = true;
+
     private void Start()
     {
         diceRenderer1 = dice1.GetComponent<SpriteRenderer>();

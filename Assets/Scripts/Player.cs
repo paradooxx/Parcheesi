@@ -28,8 +28,15 @@ public class Player : MonoBehaviour
         // Set each pawn to its respective home position
         for (int i = 0; i < pawns.Length; i++)
         {
-            pawns[i].transform.position = homePositions[i].position;
-            pawns[i].ResetToHomePosition(); // Ensure the pawn is reset properly
+            if(!gameObject.activeSelf)
+            {
+                pawns[i].gameObject.SetActive(false);
+            }
+            else
+            {
+                pawns[i].transform.position = homePositions[i].position;
+                pawns[i].ResetToHomePosition(); // Ensure the pawn is reset properl
+            }
         }
     }
 
@@ -60,10 +67,10 @@ public class Player : MonoBehaviour
             default:
                 Debug.LogError("Invalid PlayerType for Player initialization!");
                 break;
-
         }
-        InitializePawns();
+        InitializePawns(); // Initialize pawns for the active player
     }
+
     // public void MovePlayer(int dice1, int dice2, System.Action onMoveComplete)
     // {
     //     int totalSteps = dice1 + dice2;

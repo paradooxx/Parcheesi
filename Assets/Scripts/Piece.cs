@@ -12,6 +12,9 @@ public class Pawn : MonoBehaviour
 
     [SerializeField, Range(0, 3)] private int pawnIndex;
 
+    private float lastClickTime = 0f;
+    private float doubleClickThreshold = 0.3f;
+
     private void Start()
     {
         mainPlayer = GetComponentInParent<Player>();
@@ -19,14 +22,36 @@ public class Pawn : MonoBehaviour
 
     private void OnMouseDown() 
     {
-        if(GameManager.Instance.currentPlayer == mainPlayer)
+        if (GameManager.Instance.currentPlayer != mainPlayer)
         {
-            Debug.Log($"Pawn clicked: {name}");
-            GameManager.Instance.OnPawnSelected(this, GameManager.Instance.diceResultSum);
+            Debug.Log($"Cannot move pawn: {name}, not the current player's turn.");
+            return;
+        }
+        
+        float timeSinceLastClick = Time.time - lastClickTime;
+        lastClickTime = Time.time;
+
+        if(timeSinceLastClick <= doubleClickThreshold)
+        {
+            // Debug.Log($"Double-tap detected. Moving pawn {name} with combined dice result: {GameManager.Instance.diceResultSum}");
+            // GameManager.Instance.OnPawnSelected(this, GameManager.Instance.diceResultSum);
+            int combinedDiceSum = GameManager.Instance.dice1Result + GameManager.Instance.dice2Result;
+            Debug.Log($"Double-tap detected. Moving pawn {name} with combined dice result: {combinedDiceSum}");
+            GameManager.Instance.OnPawnSelected(this, combinedDiceSum);
         }
         else
         {
-            Debug.Log($"Cannot move pawn: {name}, not the current player's turn.");
+            List<int> availableResults = GameManager.Instance.availableDiceResults;
+
+            if(availableResults.Count > 0)
+            {
+                Debug.Log($"Single tap detected. Moving pawn {name} with dice result: {availableResults[0]}");
+                GameManager.Instance.OnPawnSelected(this, availableResults[0]);
+            }
+            else
+            {
+                Debug.Log($"No available dice results for pawn {name}.");
+            }
         }
     }
 
@@ -47,8 +72,25 @@ public class Pawn : MonoBehaviour
         {
             Node nextNode = GameManager.Instance.GetNextNodeForPlayer(this);
 
-            if (nextNode != null && nextNode.CanPawnLand(this))
+            if (nextNode != null)
             {
+                if(nextNode.IsBlockedForOtherPlayer(this))
+                {
+                    Debug.Log($"Node {nextNode.nodeIndex} is blocked for pawn {name}. Stopping one step before.");
+                    break;
+                }
+                bool added = nextNode.AddPawn(this);
+                if(!added)
+                {
+                    Debug.Log($"Pawn {name} cannot move to node {nextNode.nodeIndex} (node is full).");
+                    break;
+                }
+
+                if(currentNode != null)
+                {
+                    currentNode.RemovePawn(this);
+                }
+
                 Debug.Log($"Moving to node: {nextNode.nodeIndex}");
                 nextNode.TryEliminatePawn(this);
                 nextNode.AddPawn(this);
@@ -81,16 +123,38 @@ public class Pawn : MonoBehaviour
         onMoveComplete?.Invoke();
     }
 
-
     public void EnterBoard()
     {
         if(!isInPlay)
         {
+            Node startNode = mainPlayer.playerPath[0];
+            bool added = startNode.AddPawn(this);
+            if(!added)
+            {
+                Debug.Log($"Cannot enter board. Start node {startNode.nodeIndex} is full.");
+                foreach(Pawn pawn in mainPlayer.GetComponentsInChildren<Pawn>())
+                {
+                    pawn.GetComponent<Collider2D>().enabled = true;
+                }
+                // GameManager.Instance.diceButton.interactable = true;
+                return;
+            }
+
             currentPositionIndex = 0;
-            Node startNode = mainPlayer.playerPath[currentPositionIndex];
-            startNode.AddPawn(this);
+            currentNode = startNode;
             transform.position = startNode.transform.position;
+            Debug.Log($"Pawn {name} entered the board at Node {startNode.nodeIndex}.");
         }
+    }
+    
+    public void EnableMovementInteraction()
+    {
+        GetComponent<Collider2D>().enabled = true;
+    }
+
+    public void DisableMovementInteraction()
+    {
+        GetComponent<Collider2D>().enabled = false;
     }
 
     public void ResetToHomePosition()
