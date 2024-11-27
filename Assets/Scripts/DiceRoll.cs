@@ -17,15 +17,24 @@ public class DiceRoll : MonoBehaviour
     [SerializeField] private float animationTime = 2.0f;
     [SerializeField] private float diceSpriteChangeTime = 0.2f;
 
+    public int diceResult1, diceResult2;
+
     private void Start()
     {
         diceRenderer1 = dice1.GetComponent<SpriteRenderer>();
         diceRenderer2 = dice2.GetComponent<SpriteRenderer>();
     }
 
-    public void RollDice()
+    public int[] RollDiceReturnResult()
     {
+        if(diceSprites.Length != 6)
+        {
+            Debug.LogError("Dice Length Error");
+            return new int[2];
+        }
         StartCoroutine(RollDiceAnimation());
+
+        return new int[] { diceResult1, diceResult2 };
     }
 
     private IEnumerator RollDiceAnimation()
@@ -41,8 +50,8 @@ public class DiceRoll : MonoBehaviour
             elapsedTime += diceSpriteChangeTime;
         }
 
-        int diceResult1 = Random.Range(1, 7);
-        int diceResult2 = Random.Range(1, 7);
+        diceResult1 = Random.Range(1, 7);
+        diceResult2 = Random.Range(1, 7);
 
         diceRenderer1.sprite = diceSprites[diceResult1 - 1];
         diceRenderer2.sprite = diceSprites[diceResult2 - 1];
