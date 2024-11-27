@@ -1,26 +1,76 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     [SerializeField] private PlayerType playerType;
+    public List<Node> playerPath;
+    public Transform victoryPosition;
 
-    private bool isInStar;
+    public List<Transform> homePositions;
+    public Pawn[] pawns;
 
-    [SerializeField] private HomePositions thisPlayerStartPositionIndex;
-    [SerializeField] private List<Transform> homePositions;
-    [SerializeField] private List<Transform> pathPoints;
+    public int currentPathIndex = 0;
+    public int currentPositionIndex = -1;
+    public bool isInPlay => currentPositionIndex >= 0;
 
-    [SerializeField] private Transform startPosition;
-    [SerializeField] private Transform endPosition;
-    private Transform currentPosition;
+    public Node currentNode;
 
-    private int startHomePosition => (int)thisPlayerStartPositionIndex;
-
-    private void Start()
+    private void InitializePawns()
     {
-        transform.position = homePositions[startHomePosition].position;
+        if (homePositions.Count != pawns.Length)
+        {
+            Debug.LogError("Home positions and pawns count mismatch!");
+            return;
+        }
+
+        // Set each pawn to its respective home position
+        for (int i = 0; i < pawns.Length; i++)
+        {
+            pawns[i].transform.position = homePositions[i].position;
+            pawns[i].ResetToHomePosition(); // Ensure the pawn is reset properly
+        }
     }
+
+    public void InitializePlayerPath()
+    {
+        switch (playerType)
+        {
+            case PlayerType.Blue:
+                playerPath = GameManager.Instance.bluePlayerPath;
+                victoryPosition = GameManager.Instance.blueVictoryPosition;
+                break;
+
+            case PlayerType.Red:
+                playerPath = GameManager.Instance.redPlayerPath;
+                victoryPosition = GameManager.Instance.redVictoryPosition;
+                break;
+
+            case PlayerType.Green:
+                playerPath = GameManager.Instance.greenPlayerPath;
+                victoryPosition = GameManager.Instance.greenVictoryPosition;
+                break;
+
+            case PlayerType.Yellow:
+                playerPath = GameManager.Instance.yellowPlayerPath;
+                victoryPosition = GameManager.Instance.yellowVictoryPosition;
+                break;
+
+            default:
+                Debug.LogError("Invalid PlayerType for Player initialization!");
+                break;
+
+        }
+        InitializePawns();
+    }
+    // public void MovePlayer(int dice1, int dice2, System.Action onMoveComplete)
+    // {
+    //     int totalSteps = dice1 + dice2;
+
+    //     if()
+    // }
+
 }
 
 public enum PlayerType

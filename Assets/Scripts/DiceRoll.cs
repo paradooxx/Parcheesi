@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class DiceRoll : MonoBehaviour
@@ -25,19 +24,19 @@ public class DiceRoll : MonoBehaviour
         diceRenderer2 = dice2.GetComponent<SpriteRenderer>();
     }
 
-    public int[] RollDiceReturnResult()
+    public int[] RollDiceWithCallback(System.Action<int, int> onDiceRolled)
     {
         if(diceSprites.Length != 6)
         {
             Debug.LogError("Dice Length Error");
             return new int[2];
         }
-        StartCoroutine(RollDiceAnimation());
+        StartCoroutine(RollDiceAnimation(onDiceRolled));
 
         return new int[] { diceResult1, diceResult2 };
     }
 
-    private IEnumerator RollDiceAnimation()
+    private IEnumerator RollDiceAnimation(System.Action<int, int> onDiceRolled)
     {
         float elapsedTime = 0f;
 
@@ -55,5 +54,7 @@ public class DiceRoll : MonoBehaviour
 
         diceRenderer1.sprite = diceSprites[diceResult1 - 1];
         diceRenderer2.sprite = diceSprites[diceResult2 - 1];
+
+        onDiceRolled?.Invoke(diceResult1, diceResult2);
     }
 }
