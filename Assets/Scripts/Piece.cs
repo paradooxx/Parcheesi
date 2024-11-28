@@ -68,6 +68,15 @@ public class Pawn : MonoBehaviour
     private IEnumerator MovePawnCoroutine(int steps, System.Action onMoveComplete)
     {
         Debug.Log($"Starting to move pawn: {name} for {steps} steps.");
+
+        int stepsToVictory = mainPlayer.playerPath.Count - currentPositionIndex - 1;
+        
+        if(steps > stepsToVictory)
+        {
+            Debug.Log($"Cannot move pawn {name} for {steps} steps. Only {stepsToVictory} steps left to victory position.");
+            onMoveComplete?.Invoke();
+            yield break;
+        }
         for (int i = 0; i < steps; i++)
         {
             Node nextNode = GameManager.Instance.GetNextNodeForPlayer(this);
@@ -132,11 +141,21 @@ public class Pawn : MonoBehaviour
             if(!added)
             {
                 Debug.Log($"Cannot enter board. Start node {startNode.nodeIndex} is full.");
+
+                bool canMoveOtherPawns = false;
                 foreach(Pawn pawn in mainPlayer.GetComponentsInChildren<Pawn>())
                 {
-                    pawn.GetComponent<Collider2D>().enabled = true;
+                    if(pawn.isInPlay)
+                    {
+                        pawn.EnableMovementInteraction();
+                        canMoveOtherPawns = true;
+                    }
                 }
-                // GameManager.Instance.diceButton.interactable = true;
+                if(canMoveOtherPawns == false)
+                {
+                    Debug.Log($"No other pawns available to move for {mainPlayer.name}. Ending turn.");
+                    GameManager.Instance.EndTurn();
+                }
                 return;
             }
 
@@ -151,12 +170,12 @@ public class Pawn : MonoBehaviour
     private IEnumerator PlayEnterBoardAnimation()
     {
         Vector3 originalScale = transform.localScale;
-        Vector3 enlargedScale = originalScale * 1.5f; // Increase size for the animation
+        Vector3 enlargedScale = originalScale * 1.5f;
 
-        float animationDuration = 0.3f; // Total time for the animation
+        float animationDuration = 0.3f;
         float elapsedTime = 0f;
 
-        // Scale up
+        //scaling up
         while (elapsedTime < animationDuration / 2)
         {
             transform.localScale = Vector3.Lerp(originalScale, enlargedScale, elapsedTime / (animationDuration / 2));
@@ -164,10 +183,9 @@ public class Pawn : MonoBehaviour
             yield return null;
         }
 
-        // Reset elapsed time
         elapsedTime = 0f;
 
-        // Scale back down
+        //scaling down
         while (elapsedTime < animationDuration / 2)
         {
             transform.localScale = Vector3.Lerp(enlargedScale, originalScale, elapsedTime / (animationDuration / 2));
@@ -175,7 +193,6 @@ public class Pawn : MonoBehaviour
             yield return null;
         }
 
-        // Ensure the scale is reset to the original size
         transform.localScale = originalScale;
     }
 

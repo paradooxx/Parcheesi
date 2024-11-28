@@ -42,8 +42,6 @@ public class GameManager : MonoBehaviour
 
     private bool hasWon;
 
-    public Button diceButton;
-
     private void Awake()
     {
         if(Instance == null)
@@ -62,7 +60,8 @@ public class GameManager : MonoBehaviour
         // allPlayers = new List<Player> { bluePlayer, redPlayer, greenPlayer, yellowPlayer };
         allPlayers = new List<Player> { bluePlayer, redPlayer };
         currentPlayer = bluePlayer;
-        currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
+        currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
+        currentTurnText.color = currentPlayer.playerColor;
         SetDicePositions(currentPlayer);
 
         foreach (Player player in allPlayers)
@@ -71,33 +70,34 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void InitializeGame(int playerCount)
-    {
-        if(playerCount < 2 || playerCount > 4)
-        {
-            //some error ui
-            return;
-        }
+    // public void InitializeGame(int playerCount)
+    // {
+    //     if(playerCount < 2 || playerCount > 4)
+    //     {
+    //         //some error ui
+    //         return;
+    //     }
 
-        allPlayers = new List<Player>();
-        if (playerCount >= 1) allPlayers.Add(bluePlayer);
-        if (playerCount >= 2) allPlayers.Add(redPlayer);
-        if (playerCount >= 3) allPlayers.Add(greenPlayer);
-        if (playerCount == 4) allPlayers.Add(yellowPlayer);
+    //     allPlayers = new List<Player>();
+    //     if (playerCount >= 1) allPlayers.Add(bluePlayer);
+    //     if (playerCount >= 2) allPlayers.Add(redPlayer);
+    //     if (playerCount >= 3) allPlayers.Add(greenPlayer);
+    //     if (playerCount == 4) allPlayers.Add(yellowPlayer);
 
-        if (!allPlayers.Contains(greenPlayer)) greenPlayer.gameObject.SetActive(false);
-        if (!allPlayers.Contains(yellowPlayer)) yellowPlayer.gameObject.SetActive(false);
+    //     if (!allPlayers.Contains(greenPlayer)) greenPlayer.gameObject.SetActive(false);
+    //     if (!allPlayers.Contains(yellowPlayer)) yellowPlayer.gameObject.SetActive(false);
 
-        foreach (Player player in allPlayers)
-        {
-            player.InitializePlayerPath();
-        }
+    //     foreach (Player player in allPlayers)
+    //     {
+    //         player.InitializePlayerPath();
+    //     }
 
-        currentPlayer = allPlayers[0];
-        currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
-
-        Debug.Log($"{playerCount} players initialized for the game.");
-    }
+    //     currentPlayer = allPlayers[0];
+    //     currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
+    //     SetDicePositions(currentPlayer);
+    //     Debug.Log($"{playerCount} players initialized for the game.");
+    //     GameStateManager.Instance.SetState(GameState.Game);
+    // }
 
     private void SetDicePositions(Player currentPlayer)
     {
@@ -113,7 +113,7 @@ public class GameManager : MonoBehaviour
 
     public void RollDice()
     {
-        diceButton.interactable = false;
+        // diceButton.interactable = false;
         diceRoll.RollDiceWithCallback((dice1, dice2) =>
         {
             dice1Result = dice1;
@@ -140,16 +140,6 @@ public class GameManager : MonoBehaviour
         return availableDiceResults.Count > 0;
     }
 
-    private bool CanPlayerMakeMove()
-    {
-        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
-        {
-            if (!pawn.isInPlay && (dice1Result == 5 || dice2Result == 5 || diceResultSum == 5)) return true; // Can enter board
-            if (pawn.isInPlay) return true; // Can move
-        }
-        return false;
-    }
-    
     private void ProcessDiceRoll()
     {
         if (!CanPlayerMakeMove())
@@ -165,15 +155,40 @@ public class GameManager : MonoBehaviour
                 if(!pawn.isInPlay)
                 {
                     pawn.EnterBoard();
-                    diceButton.interactable = true;
-                    DisablePawnSelection();
                     return;
                 }
             }
         }
-        EnablePawnSelection();
+
+        bool anyPawnInPlay = false;
+        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
+        {
+            if(pawn.isInPlay)
+            {
+                pawn.EnableMovementInteraction();
+                anyPawnInPlay = true;
+            }
+            
+        }
+        if(!anyPawnInPlay)
+        {
+            EndTurn();
+        }
+        else
+            EnablePawnSelection();
         // DisableDiceSelection();
     }
+    
+    private bool CanPlayerMakeMove()
+    {
+        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
+        {
+            if (!pawn.isInPlay && (dice1Result == 5 || dice2Result == 5 || diceResultSum == 5)) return true; // Can enter board
+            if (pawn.isInPlay) return true; // Can move
+        }
+        return false;
+    }
+    
 
     public void EnablePawnSelection()
     {
@@ -195,6 +210,14 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Moving pawn: {selectedPawn.name} for {steps} steps.");
 
+        int stepsToVictory = selectedPawn.mainPlayer.playerPath.Count - selectedPawn.currentPositionIndex - 1;
+
+        if(steps > stepsToVictory)
+        {
+            Debug.Log($"Cannot move pawn {selectedPawn.name} for {steps} steps. Only {stepsToVictory} steps left to victory position.");
+            return;
+        }
+        
         if(UseDiceResult(steps))
         {
             selectedPawn.MovePawn(steps, () => 
@@ -216,81 +239,22 @@ public class GameManager : MonoBehaviour
         // selectedPawn.MovePawn(steps, () => { EndTurn(); });
     }
 
-    private void EndTurn()
+    public void EndTurn()
     {
         DisablePawnSelection();
+        availableDiceResults.Clear();
 
         currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.Count;
         currentPlayer = allPlayers[currentPlayerIndex];
 
-        availableDiceResults.Clear();
         CheckVictoryCondition();
         SetDicePositions(currentPlayer);
         
-        currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
-        diceButton.interactable = !currentPlayer.isPlayerAI;
+        currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
+        currentTurnText.color = currentPlayer.playerColor;
+        // diceButton.interactable = !currentPlayer.isPlayerAI;
 
         // diceButton.interactable = true;
-        if(currentPlayer.isPlayerAI)
-        {
-            Invoke("StartAITurn", 3f);
-        }
-    }
-
-    private void StartAITurn()
-    {
-        Debug.Log($"AI Player {currentPlayer.name}'s turn starts.");
-        RollDice();
-        StartCoroutine(HandleAIMovement());
-    }
-
-    private IEnumerator HandleAIMovement()
-    {
-        yield return new WaitForSeconds(3f);  //dice rolling time + extra time
-
-        while (AreDiceResultsAvailable())
-        {
-            List<int> availableResults = new List<int>(availableDiceResults);
-            foreach(int diceValue in availableResults)
-            {
-                Pawn pawnToMove = SelectBestPawn(diceValue);
-                if(pawnToMove != null)
-                {
-                    Debug.Log($"AI Player {currentPlayer.name} moves pawn {pawnToMove.name} using dice {diceValue}");
-                    OnPawnSelected(pawnToMove, diceValue);
-                    yield return new WaitForSeconds(1f); // Wait for movement animation
-                }
-            }
-        }
-        EndTurn();
-    }
-
-    private Pawn SelectBestPawn(int diceValue)
-    {
-        Pawn selectedPawn = null;
-        int maxProgress = -1;
-
-        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
-        {
-            if(!pawn.isInPlay && diceValue == 5)
-            {
-                return pawn;
-            }
-            else if(pawn.isInPlay)
-            {
-                int targetPosition = pawn.currentPositionIndex + diceValue;
-                if(targetPosition < currentPlayer.playerPath.Count)
-                {
-                    int progress = targetPosition;
-                    if(progress > maxProgress)
-                    {
-                        maxProgress = progress;
-                        selectedPawn = pawn;
-                    }
-                }
-            }
-        }
-        return selectedPawn;
     }
 
     public Node GetNextNodeForPlayer(Pawn pawn)
@@ -318,12 +282,12 @@ public class GameManager : MonoBehaviour
 
     private void CheckVictoryCondition()
     {
-        bool allPawnsAtVictoruPosition = true;
+        bool allPawnsAtVictoruPosition = false;
         foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
         {
-            if (pawn.currentNode == null && pawn.currentNode != currentPlayer.victoryPosition)
+            if (pawn.currentNode != null && pawn.currentNode == currentPlayer.victoryPosition)
             {
-                allPawnsAtVictoruPosition = false;
+                allPawnsAtVictoruPosition = true;
                 break;
             }
         }
@@ -333,6 +297,28 @@ public class GameManager : MonoBehaviour
             Debug.Log($"{currentPlayer} has won the game!");
             hasWon = true;
             //some game end logic
+            GameEnd();
         }
+    }
+
+    private void GameEnd()
+    {
+        Debug.Log($"Game Over! {currentPlayer.name} is the winner!");
+
+        foreach (Player player in allPlayers)
+        {
+            foreach(Pawn pawn in player.GetComponentsInChildren<Pawn>())
+            {
+                pawn.DisableMovementInteraction();
+            }
+        }
+        Debug.Log("Game ended");
+        //some UI Message
+        Invoke("GoToMainMenu", 2f);
+    }
+    
+    private void GoToMainMenu()
+    {
+        GameStateManager.Instance.SetState(GameState.MainMenu);
     }
 }

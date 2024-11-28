@@ -94,11 +94,12 @@ public class Node : MonoBehaviour
     {
         if(isStarNode) return;
 
-        foreach(Pawn p in pawnsOnNode)
+        foreach(Pawn p in new List<Pawn>(pawnsOnNode))
         {
             if(p.mainPlayer != pawn.mainPlayer)
             {
                 p.ResetToHomePosition();
+                Debug.Log($"Pawn {p.name} eliminated by {pawn.name}.");
             }
         }
     }

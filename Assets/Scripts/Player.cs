@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] private PlayerType playerType;
+    public PlayerType playerType;
+    public Color playerColor;
     public List<Node> playerPath;
     public Transform victoryPosition;
 
