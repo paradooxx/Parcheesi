@@ -121,6 +121,7 @@ public class GameManager : MonoBehaviour
             diceResultSum = dice1Result + dice2Result;
             Debug.Log($"Dice Results: {dice1Result}, {dice2Result} : Sum: {diceResultSum}");
             availableDiceResults = new List<int> { dice1Result, dice2Result };
+            mainDice.gameObject.GetComponent<Collider2D>().enabled = false;
             ProcessDiceRoll();
         }); 
     }
@@ -152,9 +153,11 @@ public class GameManager : MonoBehaviour
         {
             foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
             {
+                pawn.DisableMovementInteraction();
                 if(!pawn.isInPlay)
                 {
                     pawn.EnterBoard();
+                    mainDice.gameObject.GetComponent<Collider2D>().enabled = true;
                     return;
                 }
             }
@@ -175,7 +178,10 @@ public class GameManager : MonoBehaviour
             EndTurn();
         }
         else
+        {
             EnablePawnSelection();
+            mainDice.gameObject.GetComponent<Collider2D>().enabled = false;
+        }
         // DisableDiceSelection();
     }
     
@@ -253,7 +259,7 @@ public class GameManager : MonoBehaviour
         currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
         currentTurnText.color = currentPlayer.playerColor;
         // diceButton.interactable = !currentPlayer.isPlayerAI;
-
+        mainDice.gameObject.GetComponent<Collider2D>().enabled = true;
         // diceButton.interactable = true;
     }
 
