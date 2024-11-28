@@ -27,31 +27,34 @@ public class Pawn : MonoBehaviour
             Debug.Log($"Cannot move pawn: {name}, not the current player's turn.");
             return;
         }
-        
-        float timeSinceLastClick = Time.time - lastClickTime;
-        lastClickTime = Time.time;
-
-        if(timeSinceLastClick <= doubleClickThreshold)
+        if(!isInPlay && (GameManager.Instance.dice1Result == 5
+                        || GameManager.Instance.dice2Result == 5
+                        || GameManager.Instance.diceResultSum == 5))
         {
-            // Debug.Log($"Double-tap detected. Moving pawn {name} with combined dice result: {GameManager.Instance.diceResultSum}");
-            // GameManager.Instance.OnPawnSelected(this, GameManager.Instance.diceResultSum);
-            int combinedDiceSum = GameManager.Instance.dice1Result + GameManager.Instance.dice2Result;
-            Debug.Log($"Double-tap detected. Moving pawn {name} with combined dice result: {combinedDiceSum}");
-            GameManager.Instance.OnPawnSelected(this, combinedDiceSum);
+            EnterBoard();
+            GameManager.Instance.DisablePawnSelection();
+            GameManager.Instance.availableDiceResults.Clear();
+            GameManager.Instance.MainDiceActive();
+            return;
+        }
+        else if(isInPlay)
+        {
+            EnableMovementInteraction();
+        }
+        else if(!isInPlay)
+        {
+            DisableMovementInteraction();
+        }
+
+        List<int> availableResults = GameManager.Instance.availableDiceResults;
+        if(availableResults.Count > 0 && isInPlay)
+        {
+            Debug.Log($"Single tap detected. Moving pawn {name} with dice result: {availableResults[0]}");
+            GameManager.Instance.OnPawnSelected(this, availableResults[0]);
         }
         else
         {
-            List<int> availableResults = GameManager.Instance.availableDiceResults;
-
-            if(availableResults.Count > 0)
-            {
-                Debug.Log($"Single tap detected. Moving pawn {name} with dice result: {availableResults[0]}");
-                GameManager.Instance.OnPawnSelected(this, availableResults[0]);
-            }
-            else
-            {
-                Debug.Log($"No available dice results for pawn {name}.");
-            }
+            Debug.Log($"No available dice results for pawn {name}.");
         }
     }
 
@@ -158,7 +161,7 @@ public class Pawn : MonoBehaviour
                 }
                 return;
             }
-
+            DisableMovementInteraction();
             currentPositionIndex = 0;
             currentNode = startNode;
             transform.position = startNode.transform.position;

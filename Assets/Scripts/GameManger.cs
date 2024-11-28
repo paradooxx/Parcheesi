@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // allPlayers = new List<Player> { bluePlayer, redPlayer, greenPlayer, yellowPlayer };
-        allPlayers = new List<Player> { bluePlayer, redPlayer };
+        allPlayers = new List<Player> { bluePlayer, greenPlayer };
         currentPlayer = bluePlayer;
         currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
         currentTurnText.color = currentPlayer.playerColor;
@@ -80,11 +80,11 @@ public class GameManager : MonoBehaviour
 
     //     allPlayers = new List<Player>();
     //     if (playerCount >= 1) allPlayers.Add(bluePlayer);
-    //     if (playerCount >= 2) allPlayers.Add(redPlayer);
-    //     if (playerCount >= 3) allPlayers.Add(greenPlayer);
+    //     if (playerCount >= 2) allPlayers.Add(greenPlayer);
+    //     if (playerCount >= 3) allPlayers.Add(redPlayer);
     //     if (playerCount == 4) allPlayers.Add(yellowPlayer);
 
-    //     if (!allPlayers.Contains(greenPlayer)) greenPlayer.gameObject.SetActive(false);
+    //     if (!allPlayers.Contains(redPlayer)) redPlayer.gameObject.SetActive(false);
     //     if (!allPlayers.Contains(yellowPlayer)) yellowPlayer.gameObject.SetActive(false);
 
     //     foreach (Player player in allPlayers)
@@ -102,13 +102,25 @@ public class GameManager : MonoBehaviour
     private void SetDicePositions(Player currentPlayer)
     {
         if(currentPlayer == bluePlayer)
+        {
+            mainDice.rotation = Quaternion.Euler(0, 0, 0);
             mainDice.position = dicePositions[0].position;
+        }
         else if(currentPlayer == redPlayer)
+        {
+            mainDice.rotation = Quaternion.Euler(0, 0, -180);
             mainDice.position = dicePositions[1].position;
+        }
         else if(currentPlayer == greenPlayer)
+        {
+            mainDice.rotation = Quaternion.Euler(0, 0, -180);
             mainDice.position = dicePositions[2].position;
+        }
         else if(currentPlayer == yellowPlayer)
+        {
+            mainDice.rotation = Quaternion.Euler(0, 0, 0);
             mainDice.position = dicePositions[3].position;
+        }
     }
 
     public void RollDice()
@@ -121,7 +133,7 @@ public class GameManager : MonoBehaviour
             diceResultSum = dice1Result + dice2Result;
             Debug.Log($"Dice Results: {dice1Result}, {dice2Result} : Sum: {diceResultSum}");
             availableDiceResults = new List<int> { dice1Result, dice2Result };
-            mainDice.gameObject.GetComponent<Collider2D>().enabled = false;
+            MainDiceDeactive();
             ProcessDiceRoll();
         }); 
     }
@@ -153,13 +165,26 @@ public class GameManager : MonoBehaviour
         {
             foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
             {
-                pawn.DisableMovementInteraction();
-                if(!pawn.isInPlay)
+                // pawn.DisableMovementInteraction();
+                Debug.Log("PPPPPPPPPPPPPLAYS: " + PawnsInPlay());
+                if(!pawn.isInPlay && PawnsInPlay() == 0)
                 {
                     pawn.EnterBoard();
-                    mainDice.gameObject.GetComponent<Collider2D>().enabled = true;
+                    DisablePawnSelection();
+                    MainDiceActive();
                     return;
                 }
+                else
+                {
+                    EnablePawnSelection();
+                }
+                // if(pawn.isInPlay)
+                // if(!pawn.isInPlay)
+                // {
+                //     pawn.EnterBoard();
+                //     mainDice.gameObject.GetComponent<Collider2D>().enabled = true;
+                //     return;
+                // }
             }
         }
 
@@ -180,9 +205,8 @@ public class GameManager : MonoBehaviour
         else
         {
             EnablePawnSelection();
-            mainDice.gameObject.GetComponent<Collider2D>().enabled = false;
+            MainDiceDeactive();
         }
-        // DisableDiceSelection();
     }
     
     private bool CanPlayerMakeMove()
@@ -210,6 +234,16 @@ public class GameManager : MonoBehaviour
         {
             pawn.GetComponent<Collider2D>().enabled = false;
         }
+    }
+
+    public void MainDiceActive()
+    {
+        mainDice.gameObject.GetComponent<Collider2D>().enabled = true;
+    }
+
+    public void MainDiceDeactive()
+    {
+        mainDice.gameObject.GetComponent<Collider2D>().enabled = false;
     }
 
     public void OnPawnSelected(Pawn selectedPawn, int steps)
@@ -243,6 +277,19 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Cannot move pawn {selectedPawn.name} for {steps} steps. Dice result unavailable.");
         }
         // selectedPawn.MovePawn(steps, () => { EndTurn(); });
+    }
+
+    public int PawnsInPlay()
+    {
+        int pawnInPlay = 0;
+        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
+        {
+            if(pawn.isInPlay)
+            {
+                pawnInPlay ++;
+            }
+        }
+        return pawnInPlay;
     }
 
     public void EndTurn()

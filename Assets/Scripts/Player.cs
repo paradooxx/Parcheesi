@@ -72,24 +72,11 @@ public class Player : MonoBehaviour
                 Debug.LogError("Invalid PlayerType for Player initialization!");
                 break;
         }
-        InitializePawns(); // Initialize pawns for the active player
+        InitializePawns(); //initializing pawns for the active player
     }
-
-    // public void MovePlayer(int dice1, int dice2, System.Action onMoveComplete)
-    // {
-    //     int totalSteps = dice1 + dice2;
-
-    //     if()
-    // }
-
 }
 
 public enum PlayerType
 {
     Blue, Red, Green, Yellow
-}
-
-public enum HomePositions
-{
-    Position0, Position1, Position2, Position3
 }

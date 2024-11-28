@@ -7,18 +7,10 @@ public class Node : MonoBehaviour
    public bool isStarNode;
    public List<Pawn> pawnsOnNode = new List<Pawn>();
 
-   public const int MAX_PLAYERS_PER_NODE =2;
+   public const int MAX_PLAYERS_PER_NODE = 2;
 
    public delegate void OnPawnLands(Pawn pawn);
    public event OnPawnLands PawnLandsEvent;
-
-   private void Start()
-   {
-        if (isStarNode)
-        {
-            Debug.Log($"Node {nodeIndex} is a star node and is safe!");
-        }
-   }
 
     public bool CanPawnLand(Pawn pawn)
     {
