@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
 
     public Node currentNode;
 
+    public bool isPlayerAI;
+
     private void InitializePawns()
     {
         if (homePositions.Count != pawns.Length)
@@ -42,26 +44,27 @@ public class Player : MonoBehaviour
 
     public void InitializePlayerPath()
     {
+        int totalPath = GameManager.Instance.bluePlayerPath.Count;
         switch (playerType)
         {
             case PlayerType.Blue:
                 playerPath = GameManager.Instance.bluePlayerPath;
-                victoryPosition = GameManager.Instance.blueVictoryPosition;
+                victoryPosition = GameManager.Instance.bluePlayerPath[totalPath - 1].transform;
                 break;
 
             case PlayerType.Red:
                 playerPath = GameManager.Instance.redPlayerPath;
-                victoryPosition = GameManager.Instance.redVictoryPosition;
+                victoryPosition = GameManager.Instance.redPlayerPath[totalPath - 1].transform;
                 break;
 
             case PlayerType.Green:
                 playerPath = GameManager.Instance.greenPlayerPath;
-                victoryPosition = GameManager.Instance.greenVictoryPosition;
+                victoryPosition = GameManager.Instance.greenPlayerPath[totalPath - 1].transform;
                 break;
 
             case PlayerType.Yellow:
                 playerPath = GameManager.Instance.yellowPlayerPath;
-                victoryPosition = GameManager.Instance.yellowVictoryPosition;
+                victoryPosition = GameManager.Instance.yellowPlayerPath[totalPath - 1].transform;
                 break;
 
             default:

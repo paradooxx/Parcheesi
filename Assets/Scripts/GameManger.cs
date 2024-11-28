@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -14,11 +15,11 @@ public class GameManager : MonoBehaviour
     public List<Node> greenPlayerPath;
     public List<Node> yellowPlayerPath;
 
-    [Header("Victory Positions")]
-    public Transform blueVictoryPosition;
-    public Transform redVictoryPosition;
-    public Transform greenVictoryPosition;
-    public Transform yellowVictoryPosition;
+    // [Header("Victory Positions")]
+    // public Transform blueVictoryPosition;
+    // public Transform redVictoryPosition;
+    // public Transform greenVictoryPosition;
+    // public Transform yellowVictoryPosition;
 
     [Header("Players")]
     public Player bluePlayer;
@@ -26,6 +27,9 @@ public class GameManager : MonoBehaviour
     public Player greenPlayer;
     public Player yellowPlayer;
 
+    [Header("Dice Positions")]
+    [SerializeField] private List<Transform> dicePositions;
+    [SerializeField] private Transform mainDice;
     [SerializeField] DiceRoll diceRoll;
     
     public int dice1Result, dice2Result, diceResultSum;
@@ -55,9 +59,11 @@ public class GameManager : MonoBehaviour
     //can remove after setting player in ui
     private void Start()
     {
-        allPlayers = new List<Player> { bluePlayer, redPlayer, greenPlayer, yellowPlayer };
+        // allPlayers = new List<Player> { bluePlayer, redPlayer, greenPlayer, yellowPlayer };
+        allPlayers = new List<Player> { bluePlayer, redPlayer };
         currentPlayer = bluePlayer;
         currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
+        SetDicePositions(currentPlayer);
 
         foreach (Player player in allPlayers)
         {
@@ -91,6 +97,18 @@ public class GameManager : MonoBehaviour
         currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
 
         Debug.Log($"{playerCount} players initialized for the game.");
+    }
+
+    private void SetDicePositions(Player currentPlayer)
+    {
+        if(currentPlayer == bluePlayer)
+            mainDice.position = dicePositions[0].position;
+        else if(currentPlayer == redPlayer)
+            mainDice.position = dicePositions[1].position;
+        else if(currentPlayer == greenPlayer)
+            mainDice.position = dicePositions[2].position;
+        else if(currentPlayer == yellowPlayer)
+            mainDice.position = dicePositions[3].position;
     }
 
     public void RollDice()
@@ -137,7 +155,7 @@ public class GameManager : MonoBehaviour
         if (!CanPlayerMakeMove())
         {
             Debug.Log($"{currentPlayer} cannot make a move. Skipping turn.");
-            EndTurn();
+            Invoke("EndTurn", 1.5f);
             return;
         }
         if(dice1Result == 5 || dice2Result == 5 || diceResultSum == 5)
@@ -195,7 +213,7 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log($"Cannot move pawn {selectedPawn.name} for {steps} steps. Dice result unavailable.");
         }
-        selectedPawn.MovePawn(steps, () => { EndTurn(); });
+        // selectedPawn.MovePawn(steps, () => { EndTurn(); });
     }
 
     private void EndTurn()
@@ -205,11 +223,74 @@ public class GameManager : MonoBehaviour
         currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.Count;
         currentPlayer = allPlayers[currentPlayerIndex];
 
-        currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
-        diceButton.interactable = true;
-        
         availableDiceResults.Clear();
         CheckVictoryCondition();
+        SetDicePositions(currentPlayer);
+        
+        currentTurnText.text = "Current Turn : " + currentPlayer.ToString();
+        diceButton.interactable = !currentPlayer.isPlayerAI;
+
+        // diceButton.interactable = true;
+        if(currentPlayer.isPlayerAI)
+        {
+            Invoke("StartAITurn", 3f);
+        }
+    }
+
+    private void StartAITurn()
+    {
+        Debug.Log($"AI Player {currentPlayer.name}'s turn starts.");
+        RollDice();
+        StartCoroutine(HandleAIMovement());
+    }
+
+    private IEnumerator HandleAIMovement()
+    {
+        yield return new WaitForSeconds(3f);  //dice rolling time + extra time
+
+        while (AreDiceResultsAvailable())
+        {
+            List<int> availableResults = new List<int>(availableDiceResults);
+            foreach(int diceValue in availableResults)
+            {
+                Pawn pawnToMove = SelectBestPawn(diceValue);
+                if(pawnToMove != null)
+                {
+                    Debug.Log($"AI Player {currentPlayer.name} moves pawn {pawnToMove.name} using dice {diceValue}");
+                    OnPawnSelected(pawnToMove, diceValue);
+                    yield return new WaitForSeconds(1f); // Wait for movement animation
+                }
+            }
+        }
+        EndTurn();
+    }
+
+    private Pawn SelectBestPawn(int diceValue)
+    {
+        Pawn selectedPawn = null;
+        int maxProgress = -1;
+
+        foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
+        {
+            if(!pawn.isInPlay && diceValue == 5)
+            {
+                return pawn;
+            }
+            else if(pawn.isInPlay)
+            {
+                int targetPosition = pawn.currentPositionIndex + diceValue;
+                if(targetPosition < currentPlayer.playerPath.Count)
+                {
+                    int progress = targetPosition;
+                    if(progress > maxProgress)
+                    {
+                        maxProgress = progress;
+                        selectedPawn = pawn;
+                    }
+                }
+            }
+        }
+        return selectedPawn;
     }
 
     public Node GetNextNodeForPlayer(Pawn pawn)
@@ -222,7 +303,7 @@ public class GameManager : MonoBehaviour
 
         int currentIndex = pawn.currentPositionIndex;
 
-        // Ensure the player has not reached the end of their path
+        // check if player has not reached the end of their path
         if (currentIndex + 1 < pawn.mainPlayer.playerPath.Count)
         {
             Node nextNode = pawn.mainPlayer.playerPath[currentIndex + 1];

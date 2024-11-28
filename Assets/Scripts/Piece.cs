@@ -143,9 +143,42 @@ public class Pawn : MonoBehaviour
             currentPositionIndex = 0;
             currentNode = startNode;
             transform.position = startNode.transform.position;
+            StartCoroutine(PlayEnterBoardAnimation());
             Debug.Log($"Pawn {name} entered the board at Node {startNode.nodeIndex}.");
         }
     }
+
+    private IEnumerator PlayEnterBoardAnimation()
+    {
+        Vector3 originalScale = transform.localScale;
+        Vector3 enlargedScale = originalScale * 1.5f; // Increase size for the animation
+
+        float animationDuration = 0.3f; // Total time for the animation
+        float elapsedTime = 0f;
+
+        // Scale up
+        while (elapsedTime < animationDuration / 2)
+        {
+            transform.localScale = Vector3.Lerp(originalScale, enlargedScale, elapsedTime / (animationDuration / 2));
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Reset elapsed time
+        elapsedTime = 0f;
+
+        // Scale back down
+        while (elapsedTime < animationDuration / 2)
+        {
+            transform.localScale = Vector3.Lerp(enlargedScale, originalScale, elapsedTime / (animationDuration / 2));
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Ensure the scale is reset to the original size
+        transform.localScale = originalScale;
+    }
+
     
     public void EnableMovementInteraction()
     {
