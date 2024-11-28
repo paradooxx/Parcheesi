@@ -39,6 +39,7 @@ public enum GameState
 {
     MainMenu,
     SelectPlayer,
+    SelectBot,
     Game,
     Finish
 }

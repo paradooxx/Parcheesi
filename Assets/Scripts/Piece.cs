@@ -18,11 +18,16 @@ public class Pawn : MonoBehaviour
     private void Start()
     {
         mainPlayer = GetComponentInParent<Player>();
+
+        if(mainPlayer.isBot)
+        {
+            DisableMovementInteraction();
+        }
     }
 
     private void OnMouseDown() 
     {
-        if (GameManager.Instance.currentPlayer != mainPlayer)
+        if (GameManager.Instance.currentPlayer != mainPlayer || mainPlayer.isBot)
         {
             Debug.Log($"Cannot move pawn: {name}, not the current player's turn.");
             return;
@@ -55,6 +60,12 @@ public class Pawn : MonoBehaviour
         else
         {
             Debug.Log($"No available dice results for pawn {name}.");
+        }
+
+        if(isInPlay && GameManager.Instance.availableDiceResults.Count > 0 && mainPlayer.isBot)
+        {
+            int steps = GameManager.Instance.availableDiceResults[Random.Range(0, GameManager.Instance.availableDiceResults.Count)];
+            GameManager.Instance.OnPawnSelected(this, steps);
         }
     }
 
@@ -110,11 +121,11 @@ public class Pawn : MonoBehaviour
                 currentPositionIndex++;
                 currentNode = nextNode;
 
-                // Smooth movement
+                // for smooth movement
                 Vector3 startPosition = transform.position;
                 Vector3 endPosition = nextNode.transform.position;
                 float elapsedTime = 0f;
-                float moveDuration = 0.5f;
+                float moveDuration = 0.1f;
 
                 while (elapsedTime < moveDuration)
                 {

@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +6,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject selectPlayerPanel;
     [SerializeField] private GameObject gameFinishedPanel;
+    [SerializeField] private GameObject selectBotPanel;
+
+    [SerializeField] private GameObject mainBg;
 
     private GameObject activePanel;
     private List<GameObject> unactivePanels;
@@ -18,8 +19,9 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        unactivePanels = new List<GameObject> { mainMenuPanel, selectPlayerPanel };
+        unactivePanels = new List<GameObject> { mainMenuPanel, selectPlayerPanel, gameFinishedPanel, selectBotPanel };
         HideAllPanels();
+        mainBg.SetActive(true);
     }
 
     private void ManagePanels(GameState state)
@@ -32,11 +34,15 @@ public class UIManager : MonoBehaviour
             case GameState.SelectPlayer:
                 SetActivePanel(selectPlayerPanel);
                 break;
+            case GameState.SelectBot:
+                SetActivePanel(selectBotPanel);
+                break;
             case GameState.Finish:
                 SetActivePanel(gameFinishedPanel);
                 break;
             case GameState.Game:
                 HideAllPanels();
+                mainBg.SetActive(false);
                 break;
         }
     }
@@ -70,6 +76,12 @@ public class UIManager : MonoBehaviour
     {
         SetActivePanel(selectPlayerPanel);
     }
+
+    public void PlayervComputer()
+    {
+        SetActivePanel(selectBotPanel);
+    }
+
 
     //use in UI to get to main menu
     public void CloseButton()

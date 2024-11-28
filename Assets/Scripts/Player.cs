@@ -18,7 +18,7 @@ public class Player : MonoBehaviour
 
     public Node currentNode;
 
-    public bool isPlayerAI;
+    public bool isBot;
 
     private void InitializePawns()
     {
