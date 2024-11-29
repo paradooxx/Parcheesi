@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviour
 
     public void InitializeGame(int playerCount)
     {
-        if(playerCount < 2 || playerCount > 4)
+        if(playerCount < 1 || playerCount > 4)
         {
             //some error ui
             return;
@@ -78,6 +78,7 @@ public class GameManager : MonoBehaviour
         if (playerCount == 4) allPlayers.Add(yellowPlayer);
 
         if (!allPlayers.Contains(redPlayer)) redPlayer.gameObject.SetActive(false);
+        if (!allPlayers.Contains(greenPlayer)) greenPlayer.gameObject.SetActive(false);
         if (!allPlayers.Contains(yellowPlayer)) yellowPlayer.gameObject.SetActive(false);
 
         foreach (Player player in allPlayers)
@@ -87,6 +88,7 @@ public class GameManager : MonoBehaviour
 
         currentPlayer = allPlayers[0];
         currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
+        currentTurnText.color = currentPlayer.playerColor;
         SetDicePositions(currentPlayer);
         Debug.Log($"{playerCount} players initialized for the game.");
         GameStateManager.Instance.SetState(GameState.Game);
@@ -289,8 +291,7 @@ public class GameManager : MonoBehaviour
         currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.Count;
         currentPlayer = allPlayers[currentPlayerIndex];
 
-        // CheckVictoryCondition();
-        CheckTestVictoryCondition();
+        CheckVictoryCondition();
         SetDicePositions(currentPlayer);
         
         currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
@@ -460,8 +461,12 @@ public class GameManager : MonoBehaviour
         {
             if (pawn.currentNode != null && pawn.currentNode == currentPlayer.victoryPosition)
             {
-                allPawnsAtVictoruPosition = true;
-                break;
+                if(pawn.GetComponent<Collider2D>().enabled)
+                {
+                    pawn.DisableMovementInteraction();
+                }
+                else
+                    allPawnsAtVictoruPosition = true;
             }
         }
 
@@ -473,29 +478,6 @@ public class GameManager : MonoBehaviour
             GameEnd();
         }
     }
-
-    private void CheckTestVictoryCondition()
-    {
-        bool anyPawnAtVictoryPosition = false;
-        List<Pawn> pawns = currentPlayer.GetComponentsInChildren<Pawn>().ToList();
-        for(int i = 0 ; i < currentPlayer.GetComponentsInChildren<Pawn>().Length ; i ++)
-        {
-            if(pawns[i].currentNode != null && pawns[i].currentNode == currentPlayer.victoryPosition)
-            {
-                anyPawnAtVictoryPosition = true;
-                break;
-            }
-        }
-
-        if (anyPawnAtVictoryPosition)
-        {
-            Debug.Log($"{currentPlayer} has won the game!");
-            hasWon = true;
-            // Some game end logic here
-            GameEnd();
-        }
-    }
-
 
     private void GameEnd()
     {
@@ -510,11 +492,11 @@ public class GameManager : MonoBehaviour
         }
         Debug.Log("Game ended");
         //some UI Message
-        Invoke("GoToMainMenu", 2f);
+        Invoke("GameFinished", 2f);
     }
     
-    private void GoToMainMenu()
+    private void GameFinished()
     {
-        GameStateManager.Instance.SetState(GameState.MainMenu);
+        GameStateManager.Instance.SetState(GameState.Finish);
     }
 }

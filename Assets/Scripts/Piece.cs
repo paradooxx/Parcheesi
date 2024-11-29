@@ -127,12 +127,12 @@ public class Pawn : MonoBehaviour
                 float elapsedTime = 0f;
                 float moveDuration = 0.1f;
 
-                while (elapsedTime < moveDuration)
-                {
-                    transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / moveDuration);
-                    elapsedTime += Time.deltaTime;
-                    yield return null;
-                }
+                // while (elapsedTime < moveDuration)
+                // {
+                //     transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / moveDuration);
+                //     elapsedTime += Time.deltaTime;
+                //     yield return null;
+                // }
 
                 transform.position = endPosition; // Ensure final position is exact
             }

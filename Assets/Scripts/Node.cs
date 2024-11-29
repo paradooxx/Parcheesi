@@ -5,6 +5,7 @@ public class Node : MonoBehaviour
 {
    public int nodeIndex;
    public bool isStarNode;
+   public bool isFinishNode;
    public List<Pawn> pawnsOnNode = new List<Pawn>();
 
    public const int MAX_PLAYERS_PER_NODE = 2;
@@ -17,6 +18,8 @@ public class Node : MonoBehaviour
         if(pawnsOnNode.Contains(pawn)) return true;
         if(isStarNode) return true;
         
+        int maxPawnsAllowed = isFinishNode ? 4 : MAX_PLAYERS_PER_NODE;
+
         int playerPieceCount = 0;
         foreach (Pawn p in pawnsOnNode)
         {
@@ -26,14 +29,16 @@ public class Node : MonoBehaviour
             }
         }
 
-        if(playerPieceCount < MAX_PLAYERS_PER_NODE)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return playerPieceCount < maxPawnsAllowed;
+
+        // if(playerPieceCount < MAX_PLAYERS_PER_NODE)
+        // {
+        //     return true;
+        // }
+        // else
+        // {
+        //     return false;
+        // }
     }
 
     public bool AddPawn(Pawn pawn)
@@ -42,6 +47,8 @@ public class Node : MonoBehaviour
         {
             return true;
         }
+
+        int maxPawnsAllowed = isFinishNode ? 4 : MAX_PLAYERS_PER_NODE;
         
         int playerPieceCount = 0;
         foreach (Pawn p in pawnsOnNode)
@@ -52,7 +59,7 @@ public class Node : MonoBehaviour
             }
         }
         //checking if the node is full or not
-        if(playerPieceCount < MAX_PLAYERS_PER_NODE)
+        if(playerPieceCount < maxPawnsAllowed)
         {
             pawnsOnNode.Add(pawn);
             PawnLandsEvent?.Invoke(pawn);
@@ -98,12 +105,13 @@ public class Node : MonoBehaviour
 
     public bool IsBlockedForOtherPlayer(Pawn pawn)
     {
+        int maxPawnsAllowed = isFinishNode ? 4 : MAX_PLAYERS_PER_NODE;
         int playerPieceCount = 0;
 
         foreach (Pawn p in pawnsOnNode)
         {
             playerPieceCount ++;
         }
-        return playerPieceCount >= MAX_PLAYERS_PER_NODE && pawnsOnNode[0].mainPlayer != pawn.mainPlayer;
+        return playerPieceCount >= maxPawnsAllowed && pawnsOnNode[0].mainPlayer != pawn.mainPlayer;
     }
 }
