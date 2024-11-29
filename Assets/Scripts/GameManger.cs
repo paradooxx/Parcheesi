@@ -74,7 +74,12 @@ public class GameManager : MonoBehaviour
         allPlayers = new List<Player>();
         if (playerCount >= 1) allPlayers.Add(bluePlayer);
         if (playerCount >= 2) allPlayers.Add(greenPlayer);
-        if (playerCount >= 3) allPlayers.Add(redPlayer);
+        if (playerCount >= 3)
+        {
+            allPlayers.Remove(greenPlayer);
+            allPlayers.Add(redPlayer); 
+            allPlayers.Add(greenPlayer); 
+        } 
         if (playerCount == 4) allPlayers.Add(yellowPlayer);
 
         if (!allPlayers.Contains(redPlayer)) redPlayer.gameObject.SetActive(false);
@@ -288,10 +293,13 @@ public class GameManager : MonoBehaviour
         DisablePawnSelection();
         availableDiceResults.Clear();
 
+        if(CheckVictoryCondition() == true)
+        {
+           return; 
+        }
         currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.Count;
         currentPlayer = allPlayers[currentPlayerIndex];
 
-        CheckVictoryCondition();
         SetDicePositions(currentPlayer);
         
         currentTurnText.text = "Current Turn : " + currentPlayer.playerType.ToString();
@@ -454,29 +462,33 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void CheckVictoryCondition()
+    private bool CheckVictoryCondition()
     {
-        bool allPawnsAtVictoruPosition = false;
+        // bool allPawnsAtVictoruPosition = false;
+        int pawnsAtFinishLine =  0;
         foreach (Pawn pawn in currentPlayer.GetComponentsInChildren<Pawn>())
         {
-            if (pawn.currentNode != null && pawn.currentNode == currentPlayer.victoryPosition)
+            if (pawn.currentNode != null && pawn.currentNode.transform == currentPlayer.victoryPosition)
             {
-                if(pawn.GetComponent<Collider2D>().enabled)
-                {
-                    pawn.DisableMovementInteraction();
-                }
-                else
-                    allPawnsAtVictoruPosition = true;
+                pawnsAtFinishLine ++;
+                // if(pawn.GetComponent<Collider2D>().enabled)
+                // {
+                //     pawn.DisableMovementInteraction();
+                // }
+                // else
+                //     allPawnsAtVictoruPosition = true;
             }
         }
-
-        if (allPawnsAtVictoruPosition)
+        Debug.Log("PAWWWWWNSSSS at Finish: " + pawnsAtFinishLine);
+        if (pawnsAtFinishLine == 4)
         {
             Debug.Log($"{currentPlayer} has won the game!");
             hasWon = true;
             //some game end logic
             GameEnd();
+            return true;
         }
+        return false;
     }
 
     private void GameEnd()
@@ -492,7 +504,7 @@ public class GameManager : MonoBehaviour
         }
         Debug.Log("Game ended");
         //some UI Message
-        Invoke("GameFinished", 2f);
+        GameFinished();
     }
     
     private void GameFinished()

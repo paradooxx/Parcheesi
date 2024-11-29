@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
@@ -9,6 +10,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject selectBotPanel;
 
     [SerializeField] private GameObject mainBg;
+
+    [SerializeField] private TMP_Text winText;
 
     private GameObject activePanel;
     private List<GameObject> unactivePanels;
@@ -33,12 +36,16 @@ public class UIManager : MonoBehaviour
                 break;
             case GameState.SelectPlayer:
                 SetActivePanel(selectPlayerPanel);
+                mainBg.SetActive(false);
                 break;
             case GameState.SelectBot:
                 SetActivePanel(selectBotPanel);
+                mainBg.SetActive(false);
                 break;
             case GameState.Finish:
                 SetActivePanel(gameFinishedPanel);
+                mainBg.SetActive(false);
+                winText.text = "Winner: " + GameManager.Instance.currentPlayer.playerType.ToString();
                 break;
             case GameState.Game:
                 HideAllPanels();
